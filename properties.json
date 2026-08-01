@@ -1,0 +1,20 @@
+[
+  {
+    "id": "local-1785574676151-1",
+    "title": "UploadTest",
+    "location": "Local",
+    "price": "100",
+    "type": "Apartment",
+    "description": "Uploaded via test",
+    "media": [
+      {
+        "url": "/uploads/mediaFiles-1785574675555-313347084.jpg",
+        "filename": "mediaFiles-1785574675555-313347084.jpg",
+        "type": "image/jpeg",
+        "isVideo": false
+      }
+    ],
+    "createdAt": "2026-08-01T08:57:56.151Z",
+    "updatedAt": "2026-08-01T08:57:56.178Z"
+  }
+]
