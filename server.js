@@ -170,13 +170,22 @@ async function initializeDatabase() {
         console.warn('⚠️ MongoDB connection failed. Falling back to local JSON storage.', err.message);
     }
 
-    app.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server is live on http://0.0.0.0:${PORT}`);
-        console.log(`Local access: http://localhost:${PORT}`);
-        console.log(`CORS allowed origin: ${frontendOrigin}`);
-    });
+  async function initializeDatabase() {
+  if (!MONGO_URI) {
+    console.warn('⚠️ MONGO_URI is not configured. Using local JSON storage for listings.');
+    return;
+  }
+  try {
+    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
+    usingMongo = true;
+    Property = mongoose.model('Property', propertySchema);
+    console.log('✅ Connected to MongoDB Atlas successfully!');
+  } catch (err) {
+    console.warn('⚠️ MongoDB connection failed. Falling back to local JSON storage.', err.message);
+  }
 }
 
+// Run the database initialization
 initializeDatabase();
 
 // ==========================================
@@ -350,6 +359,12 @@ app.delete('/api/properties/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Failed to delete property.' });
     }
 });
-
+// ==========================================
+// START THE SERVER HERE (Outside the function)
+// ==========================================
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is live on port ${PORT}`);
+  console.log(`CORS allowed origin: ${frontendOrigin}`);
+});
 // ==========================================
 // START SERVER
