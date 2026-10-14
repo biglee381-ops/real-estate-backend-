@@ -123,66 +123,47 @@ async function deletePropertyFromStore(id) {
     return { deletedCount: properties.length - filtered.length };
 }
 
+// Define Schemas globally so they are accessible
+const mediaSchema = new mongoose.Schema({
+    url: { type: String, required: true },
+    filename: { type: String, required: true },
+    type: { type: String, default: 'image/jpeg' },
+    isVideo: { type: Boolean, default: false }
+});
+
+const propertySchema = new mongoose.Schema({
+    title: { type: String, required: true, default: 'Untitled Property' },
+    location: { type: String, required: true, default: 'Location unlisted' },
+    price: { type: String, required: true, default: 'Contact for Price' },
+    type: { type: String, default: 'Real Estate' },
+    description: { type: String, default: '' },
+    media: [mediaSchema]
+}, { timestamps: true });
+
+propertySchema.set('toJSON', {
+    virtuals: true,
+    transform: (doc, ret) => {
+        ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret.__v;
+        return ret;
+    }
+});
+
 async function initializeDatabase() {
     if (!MONGO_URI) {
         console.warn('⚠️ MONGO_URI is not configured. Using local JSON storage for listings.');
-        app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server is live on http://0.0.0.0:${PORT}`);
-            console.log(`Local access: http://localhost:${PORT}`);
-            console.log(`CORS allowed origin: ${frontendOrigin}`);
-        });
         return;
     }
 
     try {
         await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
         usingMongo = true;
-
-        const mediaSchema = new mongoose.Schema({
-            url: { type: String, required: true },
-            filename: { type: String, required: true },
-            type: { type: String, default: 'image/jpeg' },
-            isVideo: { type: Boolean, default: false }
-        });
-
-        const propertySchema = new mongoose.Schema({
-            title: { type: String, required: true, default: 'Untitled Property' },
-            location: { type: String, required: true, default: 'Location unlisted' },
-            price: { type: String, required: true, default: 'Contact for Price' },
-            type: { type: String, default: 'Real Estate' },
-            description: { type: String, default: '' },
-            media: [mediaSchema]
-        }, { timestamps: true });
-
-        propertySchema.set('toJSON', {
-            virtuals: true,
-            transform: (doc, ret) => {
-                ret.id = ret._id.toString();
-                delete ret._id;
-                delete ret.__v;
-                return ret;
-            }
-        });
-
         Property = mongoose.model('Property', propertySchema);
         console.log('✅ Connected to MongoDB Atlas successfully!');
     } catch (err) {
         console.warn('⚠️ MongoDB connection failed. Falling back to local JSON storage.', err.message);
     }
-
-  async function initializeDatabase() {
-  if (!MONGO_URI) {
-    console.warn('⚠️ MONGO_URI is not configured. Using local JSON storage for listings.');
-    return;
-  }
-  try {
-    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
-    usingMongo = true;
-    Property = mongoose.model('Property', propertySchema);
-    console.log('✅ Connected to MongoDB Atlas successfully!');
-  } catch (err) {
-    console.warn('⚠️ MongoDB connection failed. Falling back to local JSON storage.', err.message);
-  }
 }
 
 // Run the database initialization
@@ -359,12 +340,11 @@ app.delete('/api/properties/:id', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Failed to delete property.' });
     }
 });
+
 // ==========================================
-// START THE SERVER HERE (Outside the function)
+// START THE SERVER
 // ==========================================
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is live on port ${PORT}`);
-  console.log(`CORS allowed origin: ${frontendOrigin}`);
+    console.log(`Server is live on port ${PORT}`);
+    console.log(`CORS allowed origin: ${frontendOrigin}`);
 });
-// ==========================================
-// START SERVER
